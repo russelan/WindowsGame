@@ -85,7 +85,7 @@ namespace WindowsGame1
 
         public void Draw(GraphicsDeviceManager graphics, GameTime gameTime)
         {
-            DrawModel(graphics, model, Matrix.CreateScale(originRose.size) * Matrix.CreateTranslation(originRose.position));
+            DrawModel(graphics, model, Matrix.CreateScale(originRose.size) * Matrix.CreateTranslation(new Vector3(0,0,0)));
 
             foreach (Rose rose in roseList)
             {

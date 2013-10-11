@@ -15,7 +15,7 @@ namespace WindowsGame1
        private Vector3 center = new Vector3(0, 0, 0);
        private Vector3 up = new Vector3(0, 1, 0);
        private float fov = MathHelper.ToRadians(35);
-       private float znear = 10;
+       private float znear = 1;
        private float zfar = 10000;
 
        private bool mousePitchYaw = true;
@@ -48,6 +48,7 @@ namespace WindowsGame1
            }
 
            lastMouseState = mouseState;
+           ComputeView();
        }
 
        public Camera(GraphicsDeviceManager graphics)
