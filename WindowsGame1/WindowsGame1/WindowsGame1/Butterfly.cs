@@ -14,7 +14,9 @@ namespace WindowsGame1
    public class Butterfly
     {
        private enum WingStates { Up, Down, NotMoving };
+       private enum PollenatingStates { Up, Down, FlyAway, Nothing };
        WingStates states;
+       PollenatingStates pollenStates;
        private BugGame game;
        bool increaseAltitude = false;
        private Model model;
@@ -22,19 +24,22 @@ namespace WindowsGame1
        private float gravity = 9.81f;
        Vector3 position = Vector3.Zero;
        public Vector3 Position { get { return position; } set { position = value; } }
+       
+       private bool isPolenating = false;
 
        private int wing1;          // Index to the wing 1 bone
        private int wing2;          // Index to the wing 2 bone
        private float wingAngle = 0; // Current wing deployment angle
 
        private bool deployed = false;
-       private float YSpeed = 3;
+       private float YSpeed = 10;
        private float movementSpeed = 10;
        private float move = 0;
 
        private float azimuth = 0;
        private float turnRate = 0;
-       
+
+       float delta = 0;
        private float rotationSpeed = 3.14f;
 
        public Butterfly(BugGame game)
@@ -62,38 +67,77 @@ namespace WindowsGame1
        /// <param name="gameTime"></param>
        public void Update(GameTime gameTime)
        {
-           float wingMoveTime = .50f;
-           if (increaseAltitude)
-           {
-               //states = WingStates.Up;
-               position += new Vector3(0, 1, 0) * YSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-               if (position.Y > 2000)
-                   position.Y = 2000;
-               
-           }
-           else
-           {
-               position -= new Vector3(0, 1, 0) * gravity * (float)gameTime.ElapsedGameTime.TotalSeconds;
-               if (position.Y < 0)
-               {
-                   position.Y = 0;
-                  // states = WingStates.NotMoving;
-                   //wingAngle = 0;
-               }
-           }
+
            azimuth += turnRate * rotationSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
            Matrix transform = Matrix.CreateRotationY(azimuth);
            Vector3 direction = Vector3.TransformNormal(new Vector3(0, 0, 1), transform);
+           
+           delta += (float)gameTime.ElapsedGameTime.TotalSeconds;
+           switch (pollenStates)
+           {
+               case PollenatingStates.Up:
+                   position += new Vector3(0, 1, 0) * (YSpeed+20) * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                   if (delta > 1.0f)
+                   {
+                       pollenStates = PollenatingStates.Down;
+                       delta = 0;
+                       return;
+                   }
+                   break;
+               case PollenatingStates.Down:
+                   position -= new Vector3(0, 1, 0) * YSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                   if (delta > 1.0f)
+                   {
+                       pollenStates = PollenatingStates.FlyAway;
+                       delta = 0;
+                       return;
+                   }
+                   break;
+               case PollenatingStates.FlyAway:
+                   position += 1 * direction * movementSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                   if (delta > 1.0f)
+                   {
+                       delta = 0;
+                       pollenStates = PollenatingStates.Nothing;
+                       isPolenating = false;
+                       return;
+                   }
+                   break;
+           }
+           if(!isPolenating)
+           {
+             if (increaseAltitude)
+            {
+                 //states = WingStates.Up;
+                position += new Vector3(0, 1, 0) * YSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (position.Y > 2000)
+                    position.Y = 2000;
+               
+              }
+             else
+             {
+                  position -= new Vector3(0, 1, 0) * gravity * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                  if (position.Y < 0)
+                   {
+                      position.Y = 0;
+                      // states = WingStates.NotMoving;
+                       //wingAngle = 0;
+                  }
+             }
 
-           position += move * direction * movementSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            position += move * direction * movementSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+           }
+           float wingMoveTime = .50f;
            switch (states)
            {
-                   
+               
                case WingStates.Up:
                    {
                        wingAngle += .3f * (float)gameTime.ElapsedGameTime.TotalSeconds / wingMoveTime;
                        if (wingAngle > .3f)
                            states = WingStates.Down;
+
                        break;
                    }
                case WingStates.Down:
@@ -164,10 +208,16 @@ namespace WindowsGame1
            }
        }
 
+       public void SetPollenatingStateToPollenate()
+       {
+           pollenStates = PollenatingStates.Up;
+       }
+
        public bool Deployed { get { return deployed; } set { deployed = value; } }
        public bool IncreaseAltitude { get { return increaseAltitude; } set { increaseAltitude = value; } }
        public float TurnRate {get {return turnRate;}  set { turnRate = value;} }
        public float Move { get { return move; } set { move = value; } }
+       public bool IsPollenating { get { return isPolenating; } set { isPolenating = value; } }
 
        public Matrix Transform { get { Matrix transform = Matrix.CreateRotationY(azimuth) * Matrix.CreateTranslation(position); return transform; } }
     }
