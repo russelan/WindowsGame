@@ -38,7 +38,8 @@ namespace WindowsGame1
         private int score;
         private int lives;
         private int livecounter =0 ;
-
+        private float timeSinceLastContanct = 0;
+        float delta;
         private KeyboardState lastKeyboardState;
 
         /// <summary>
@@ -195,16 +196,20 @@ namespace WindowsGame1
                 Matrix[] transforms = new Matrix[butterfly.Model.Bones.Count];
                 butterfly.Model.CopyAbsoluteBoneTransformsTo(transforms);
                 Matrix buttTransform = butterfly.Transform;
-
+                delta += (float)gameTime.ElapsedGameTime.TotalSeconds;
                 foreach (ModelMesh mesh in butterfly.Model.Meshes)
                 {
                     BoundingSphere bs = mesh.BoundingSphere;
                     bs = bs.Transform(transforms[mesh.ParentBone.Index] * buttTransform);
-                    if (rose.inLandingZone(bs))
+                    if (rose.inLandingZone(bs) && delta > 3.5)
                     {
                         //butterfly.Position = Vector3.Zero;
                         //butterfly.WingAngle = 0;
+                        delta = 0;
                         score = score + 1;
+                        
+                        butterfly.SetPollenatingStateToPollenate();
+                        butterfly.IsPollenating = true;
                     }
                     if (swarm.TestSphereForCollision(bs))
                     {
@@ -235,6 +240,8 @@ namespace WindowsGame1
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
             if (gameState == GameState.Splash)
             {
                 spriteBatch.Begin();
@@ -254,6 +261,8 @@ namespace WindowsGame1
                 DrawSky(graphics, sky, transform);
                 // TODO: Add your drawing code here
                 swarm.Draw(graphics, gameTime);
+                
+                
                 rose.Draw(graphics, gameTime);
                 butterfly.Draw(graphics, gameTime);
                 base.Draw(gameTime);
